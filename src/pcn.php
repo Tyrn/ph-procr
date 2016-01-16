@@ -28,7 +28,19 @@ function has_ext_of($pth, $ext)
   return strtoupper(trim($parts['extension'], '.')) === strtoupper(trim($ext, '.'));
 }
 
+function str_strip_numbers($s)
+/*
+  Returns a vector of integer numbers
+  embedded in a string argument
+ */
+{
+  preg_match_all("!\d+!", $s, $matches);
+  return array_map(function($ss) {return intval($ss);}, $matches[0]);
+}
+
 if (!debug_backtrace()) {
   print sans_ext('/able/baker/cord.mp3') . "\n";
+  preg_match_all("!\d+!", "ab11cdd2k.144", $matches);
+  print_r($matches[0]);
 }
 ?>
