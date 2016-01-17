@@ -33,17 +33,38 @@ function retrieve_args()
     print $opt->getHelpText();
     exit(2);
   }
+  if (count($opt->getOperands()) !== 2) {
+    print "Command line syntax: <src> and <dst> operands required.\n" . $opt->getHelpText();
+    exit(2);
+  }
+  if (!file_exists($opt->getOperand(0))) {
+    print "Source directory \"{$opt->getOperand(0)}\" is not there.\n";
+    exit(2);
+  }
+  if (!file_exists($opt->getOperand(1))) {
+    print "Destination path \"{$opt->getOperand(1)}\" is not there.\n";
+    exit(2);
+  }
   return $opt;
 }
 
 $args = null;
 
 function arg($key)
+/*
+  Returns any command line option or operand
+ */
 {
+  global $args;
+  if ($key === 'src') return rtrim($args->getOperand(0), '/\\');
+  if ($key === 'dst') return rtrim($args->getOperand(1), '/\\');
   return $args->getOption($key);
 }
 
 function join_paths()
+/*
+  Returns any number of paths correctly joined
+ */
 {
   $paths = array();
   foreach (func_get_args() as $arg) {
@@ -134,7 +155,9 @@ function make_initials($name, $sep = ".", $trail = ".", $hyph = "-")
 
 function main()
 {
+  global $args;
   $args = retrieve_args();
+  print arg('src') . ' ' . arg('dst') . "\n";
   print "Run as script." . "\n";
 }
 
