@@ -1,5 +1,5 @@
 <?php
-require_once '../src/pcn.php';
+require_once 'src/pcn.php';
 
 class PcnTests extends PHPUnit_Framework_TestCase
 {
@@ -24,6 +24,7 @@ class PcnTests extends PHPUnit_Framework_TestCase
   }
   public function test_array_cmp()
   {
+    $this->assertEquals(Procrustes\array_cmp(array(), []), 0);
     $this->assertEquals(Procrustes\array_cmp(array(), array()), 0);
     $this->assertEquals(Procrustes\array_cmp(array(1), array()), 1);
     $this->assertEquals(Procrustes\array_cmp(array(3), array()), 1);

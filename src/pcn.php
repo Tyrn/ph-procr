@@ -1,6 +1,48 @@
 <?php
 namespace Procrustes;
 
+require_once 'vendor/autoload.php';
+
+use Ulrichsg\Getopt\Getopt;
+use Ulrichsg\Getopt\Option;
+
+function retrieve_args()
+{
+  $opt = new Getopt(
+    [
+      (new Option('h', 'help'))->setDescription('Prints this help'),
+      (new Option('v', 'verbose'))->setDescription('Verbose output'),
+      (new Option('f', 'file-title'))->setDescription('Use file name for title tag'),
+      (new Option('x', 'sort-lex'))->setDescription('Sort files lexicographically'),
+      (new Option('t', 'tree-dst'))->setDescription('Retain the tree structure of the source album at destination'),
+      (new Option('p', 'drop-dst'))->setDescription('Do not create destination directory'),
+      (new Option('r', 'reverse'))->setDescription('Copy files in reverse order (last file first)'),
+      (new Option('e', 'file-type', Getopt::REQUIRED_ARGUMENT))
+        ->setDescription('Accept only audio files of the specified type'),
+      (new Option('u', 'unified-name', Getopt::REQUIRED_ARGUMENT))
+        ->setDescription('Base name for everything but the "Artist" tag'),
+      (new Option('b', 'album-num', Getopt::REQUIRED_ARGUMENT))->setDescription('Album number'),
+      (new Option('a', 'artist-tag', Getopt::REQUIRED_ARGUMENT))->setDescription('"Artist" tag'),
+      (new Option('g', 'album-tag', Getopt::REQUIRED_ARGUMENT))->setDescription('"Album" tag')
+    ]
+  );
+
+  $opt->parse();
+
+  if ($opt->getOption('help')) {
+    print $opt->getHelpText();
+    exit(2);
+  }
+  return $opt;
+}
+
+$args = null;
+
+function arg($key)
+{
+  return $args->getOption($key);
+}
+
 function join_paths()
 {
   $paths = array();
@@ -90,7 +132,13 @@ function make_initials($name, $sep = ".", $trail = ".", $hyph = "-")
   return join($hyph, array_map($split_by_space, $spl)) . $trail;
 }
 
-if (!debug_backtrace()) {
+function main()
+{
+  $args = retrieve_args();
   print "Run as script." . "\n";
+}
+
+if (!debug_backtrace()) {
+  main();
 }
 ?>
