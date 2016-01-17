@@ -34,5 +34,22 @@ class PcnTests extends PHPUnit_Framework_TestCase
     $this->assertEquals(Procrustes\array_cmp(array(0, 13), array(0, 2, 2)), 1);
     $this->assertEquals(Procrustes\array_cmp(array(11, 2), array(11, 2)), 0);
   }
+  public function test_strcmp_naturally()
+  {
+    $this->assertEquals(Procrustes\strcmp_naturally("", ""), 0); 
+    $this->assertEquals(Procrustes\strcmp_naturally("2a", "10a"), -1); 
+    $this->assertEquals(Procrustes\strcmp_naturally("alfa", "bravo"), -1); 
+  }
+  public function test_make_initials()
+  {
+    $this->assertEquals(Procrustes\make_initials(" "), ".");
+    $this->assertEquals(Procrustes\make_initials("John ronald reuel Tolkien"), "J.R.R.T.");
+    $this->assertEquals(Procrustes\make_initials("e. B. Sledge"), "E.B.S.");
+    $this->assertEquals(Procrustes\make_initials("Apsley Cherry-Garrard"), "A.C-G.");
+    $this->assertEquals(Procrustes\make_initials("Windsor Saxe-\tCoburg - Gotha"), "W.S-C-G.");
+    $this->assertEquals(Procrustes\make_initials("Elisabeth Kubler-- - Ross"), "E.K---R.");
+    $this->assertEquals(Procrustes\make_initials("Fitz-Simmons Ashton-Burke Leigh"), "F-S.A-B.L.");
+    $this->assertEquals(Procrustes\make_initials('Arleigh"31-knot"Burke'), "A.B.");
+  }
 }
 ?>

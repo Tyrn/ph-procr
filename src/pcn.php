@@ -25,7 +25,7 @@ function has_ext_of($pth, $ext)
  */
 {
   $parts = pathinfo($pth);
-  return strtoupper(trim($parts['extension'], '.')) === strtoupper(trim($ext, '.'));
+  return mb_strtoupper(trim($parts['extension'], '.')) === mb_strtoupper(trim($ext, '.'));
 }
 
 function str_strip_numbers($s)
@@ -39,6 +39,9 @@ function str_strip_numbers($s)
 }
 
 function array_cmp($x, $y)
+/*
+  Compares arrays of integers using 'string semantics'
+ */
 {
   if(count($x) === 0) return (count($y) === 0) ? 0 : -1;
   if(count($y) === 0) return (count($x) === 0) ? 0 : 1;
@@ -54,9 +57,40 @@ function array_cmp($x, $y)
   return ($x[$i] < $y[$i]) ? -1 : 1;
 }
 
+function strcmp_naturally($x, $y)
+/*
+  If both strings contain digits, returns numerical comparison based on the numeric
+  values embedded in the strings, otherwise returns the standard string comparison.
+  The idea of the natural sort as opposed to the standard lexicographic sort is one of coping
+  with the possible absence of the leading zeros in 'numbers' of files or directories
+ */
+{
+  $a = str_strip_numbers($x);
+  $b = str_strip_numbers($y);
+  return ($a && $b) ? array_cmp($a, $b) : strcmp($x, $y);
+}
+
+function make_initials($name, $sep = ".", $trail = ".", $hyph = "-")
+/*
+  Reduces a string of names to initials
+ */
+{
+  preg_match_all("!\"!", $name, $matches);
+  $qcnt = count($matches[0]);
+  $enm = ($qcnt === 0 || $qcnt % 2) ? $name : preg_replace('/"(.*?)"/', " ", $name);
+
+  $split_by_space = function($nm) use($sep)
+  {
+    $spl = preg_split('/\s+/', trim($nm));
+    $ini = array_map(function($x) {return mb_substr($x, 0, 1);}, $spl);
+    return mb_strtoupper(join($sep, $ini));
+  };
+
+  $spl = preg_split('!' . $hyph . '!', $enm);
+  return join($hyph, array_map($split_by_space, $spl)) . $trail;
+}
+
 if (!debug_backtrace()) {
-  print sans_ext('/able/baker/cord.mp3') . "\n";
-  preg_match_all("!\d+!", "ab11cdd2k.144", $matches);
-  print_r($matches[0]);
+  print "Run as script." . "\n";
 }
 ?>
