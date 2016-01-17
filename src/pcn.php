@@ -38,6 +38,22 @@ function str_strip_numbers($s)
   return array_map(function($ss) {return intval($ss);}, $matches[0]);
 }
 
+function array_cmp($x, $y)
+{
+  if(count($x) === 0) return (count($y) === 0) ? 0 : -1;
+  if(count($y) === 0) return (count($x) === 0) ? 0 : 1;
+
+  for($i = 0; $x[$i] === $y[$i]; $i++) {
+    if($i === count($x) - 1 || $i === count($y) - 1) {
+      // Short array is a prefix of the long one; end reached. All is equal so far.
+      if(count($x) === count($y)) return 0;   // Long array is no longer than the short one.
+      return (count($x) < count($y)) ? -1 : 1;
+    }
+  }
+  // Difference encountered.
+  return ($x[$i] < $y[$i]) ? -1 : 1;
+}
+
 if (!debug_backtrace()) {
   print sans_ext('/able/baker/cord.mp3') . "\n";
   preg_match_all("!\d+!", "ab11cdd2k.144", $matches);

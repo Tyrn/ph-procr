@@ -22,5 +22,17 @@ class PcnTests extends PHPUnit_Framework_TestCase
     $this->assertEquals(Procrustes\str_strip_numbers("ab11cdd2k.144"), array(11, 2, 144));
     $this->assertEquals(Procrustes\str_strip_numbers("Ignacio Vazkez-Abrams"), array());
   }
+  public function test_array_cmp()
+  {
+    $this->assertEquals(Procrustes\array_cmp(array(), array()), 0);
+    $this->assertEquals(Procrustes\array_cmp(array(1), array()), 1);
+    $this->assertEquals(Procrustes\array_cmp(array(3), array()), 1);
+    $this->assertEquals(Procrustes\array_cmp(array(1, 2, 3), array(1, 2, 3, 4, 5)), -1);
+    $this->assertEquals(Procrustes\array_cmp(array(1, 4), array(1, 4, 16)), -1);
+    $this->assertEquals(Procrustes\array_cmp(array(2, 8), array(2, 2, 3)), 1);
+    $this->assertEquals(Procrustes\array_cmp(array(0, 0, 2, 4), array(0, 0, 15)), -1);
+    $this->assertEquals(Procrustes\array_cmp(array(0, 13), array(0, 2, 2)), 1);
+    $this->assertEquals(Procrustes\array_cmp(array(11, 2), array(11, 2)), 0);
+  }
 }
 ?>
