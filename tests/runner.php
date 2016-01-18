@@ -41,6 +41,11 @@ class PcnTests extends PHPUnit_Framework_TestCase
     $this->assertEquals(Procrustes\strcmp_naturally("2a", "10a"), -1); 
     $this->assertEquals(Procrustes\strcmp_naturally("alfa", "bravo"), -1); 
   }
+  public function test_is_audio_file()
+  {
+    $this->assertEquals(Procrustes\is_audio_file("alfa.txt"), false); 
+    $this->assertEquals(Procrustes\is_audio_file("alfa.flac"), true); 
+  }
   public function test_make_initials()
   {
     $this->assertEquals(Procrustes\make_initials(" "), ".");

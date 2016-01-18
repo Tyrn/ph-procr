@@ -37,11 +37,11 @@ function retrieve_args()
     print "Command line syntax: <src> and <dst> operands required.\n" . $opt->getHelpText();
     exit(2);
   }
-  if (!file_exists($opt->getOperand(0))) {
+  if (!is_dir($opt->getOperand(0))) {
     print "Source directory \"{$opt->getOperand(0)}\" is not there.\n";
     exit(2);
   }
-  if (!file_exists($opt->getOperand(1))) {
+  if (!is_dir($opt->getOperand(1))) {
     print "Destination path \"{$opt->getOperand(1)}\" is not there.\n";
     exit(2);
   }
@@ -80,6 +80,15 @@ function sans_ext($pth)
 {
   $parts = pathinfo($pth);
   return join_paths($parts['dirname'], $parts['filename']);
+}
+
+function file_name($pth)
+/*
+  Extracts file name without extension
+ */
+{
+  $parts = pathinfo($pth);
+  return $parts['filename'];
 }
 
 function has_ext_of($pth, $ext)
@@ -133,6 +142,17 @@ function strcmp_naturally($x, $y)
   return ($a && $b) ? array_cmp($a, $b) : strcmp($x, $y);
 }
 
+/*
+  Returns true, if pth is a recognized audio file
+ */
+function is_audio_file($pth)
+{
+  if (is_dir($pth)) return false;
+  $parts = pathinfo($pth);
+  if (in_array(mb_strtoupper($parts['extension']), ['MP3', 'M4A', 'M4B', 'OGG', 'WMA', 'FLAC'])) return true;
+  return false;
+}
+
 function make_initials($name, $sep = ".", $trail = ".", $hyph = "-")
 /*
   Reduces a string of names to initials
@@ -153,10 +173,73 @@ function make_initials($name, $sep = ".", $trail = ".", $hyph = "-")
   return join($hyph, array_map($split_by_space, $spl)) . $trail;
 }
 
+function collect_dirs_and_files($absPath, $fileCondition)
+/*
+  Returns a list of directories in absPath directory, and a list of files filtered by fileCondition
+ */
+{
+  $raw = scandir($absPath); array_shift($raw); array_shift($raw);
+  $lst = array_map(function($x) use($absPath) {return join_paths($absPath, $x);}, $raw);
+  $dirs = []; $files = [];
+  foreach ($lst as $iv) {
+    if (is_dir($iv)) array_push($dirs, $iv); else if ($fileCondition($iv)) array_push($files, $iv);
+  }
+  return [$dirs, $files];
+}
+
+function file_count($dirPath, $fileCondition)
+/*
+  Returns a total number of files in the dirPath directory filtered by fileCondition
+ */
+{
+  $cnt = 0; $haul = collect_dirs_and_files($dirPath, $fileCondition);
+  foreach ($haul[0] as $dir) {
+    $cnt += file_count($dir, $fileCondition);
+  }
+  foreach ($haul[1] as $file) {
+    if ($fileCondition($file)) $cnt++;
+  }
+  return $cnt;
+}
+
+function compare_path($xp, $yp)
+/*
+  Compares tho paths, ignoring extensions
+ */
+{
+  $x = sans_ext($xp);
+  $y = sans_ext($yp);
+  return (arg('sort-lex')) ? strcmp($x, $y) : strcmp_naturally($x, $y);
+}
+
+function compare_file($xp, $yp)
+/*
+  Compares tho paths, file names only, ignoring extensions
+ */
+{
+  $x = file_name($xp);
+  $y = file_name($yp);
+  return (arg('sort-lex')) ? strcmp($x, $y) : strcmp_naturally($x, $y);
+}
+
+function list_dir_groom($absPath, $reverse = false)
+/*
+  Returns (0) a naturally sorted list of
+  offspring directory paths (1) a naturally sorted list
+  of offspring file paths.
+ */
+{
+  global $is_audio_file;
+  $haul = collect_dirs_and_files($absPath, $is_audio_file);
+
+}
+
 function main()
 {
   global $args;
   $args = retrieve_args();
+  $cnt = file_count('/home/alexey/dir-src', "is_audio_file");
+  print "cnt=" . $cnt . "\n";
   print arg('src') . ' ' . arg('dst') . "\n";
   print "Run as script." . "\n";
 }
