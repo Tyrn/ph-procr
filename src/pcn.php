@@ -255,19 +255,32 @@ function decorate_dir_name($i, $name) {return zero_pad(3, $i) . '-' . $name;}
 
 function decorate_file_name($cntw, $i, $name)
 {
-  return zero_pad($cntw, $i) . (arg('u') ? arg('u') . '.' . file_ext($name) : $name);
+  return zero_pad($cntw, $i) . '-' . (arg('u') ? arg('u') . '.' . file_ext($name) : $name);
 }
 
-function traverse_flat_dst($srcDir, $dstRoot, $fcount, $cntw)
+function traverse_flat_dst($srcDir, $dstRoot, &$fcount, $cntw)
 {
   $groom = list_dir_groom($srcDir);
   foreach ($groom[0] as $dir) {
     yield from traverse_flat_dst($dir, $dstRoot, $fcount, $cntw);
   }
   foreach ($groom[1] as $file) {
-    $dst = join_paths($dstRoot, decorate_file_name($cntw, $fcount[0], file_name($file)));
-    $fcount[0]++;
+    $dst = join_paths($dstRoot, decorate_file_name($cntw, $fcount, basename($file)));
+    $fcount++;
     yield [$file, $dst];
+  }
+}
+
+function traverse_flat_dst_r($srcDir, $dstRoot, &$fcount, $cntw)
+{
+  $groom = list_dir_groom($srcDir, true);
+  foreach ($groom[1] as $file) {
+    $dst = join_paths($dstRoot, decorate_file_name($cntw, $fcount, basename($file)));
+    $fcount--;
+    yield [$file, $dst];
+  }
+  foreach ($groom[0] as $dir) {
+    yield from traverse_flat_dst_r($dir, $dstRoot, $fcount, $cntw);
   }
 }
 
@@ -277,33 +290,65 @@ function groom($src, $dst, $cnt)
  */
 {
   $cntw = strlen(strval($cnt));
-  if (arg('t'))
-    return traverse_flat_dst($src, $dst, [1], $cntw);
-  else
-    if (arg('r'))
-      return traverse_flat_dst($src, $dst, [1], $cntw);
-    else
-      return traverse_flat_dst($src, $dst, [1], $cntw);
+  if (arg('t')) {
+    $c = 1;
+    return traverse_flat_dst($src, $dst, $c, $cntw);
+  } else {
+    if (arg('r')) {
+      $c = $cnt;
+      return traverse_flat_dst_r($src, $dst, $c, $cntw);
+    } else {
+      $c = 1;
+      return traverse_flat_dst($src, $dst, $c, $cntw);
+    }
+  }
+}
+
+function build_album()
+/*
+  Sets up boilerplate required by the options and returns the ammo belt generator
+  of (src, dst) pairs
+ */
+{
+  $srcName = basename(arg('src'));
+  $prefix = arg('b') ? zero_pad(2, arg('b')) . '-' : '';
+  $baseDst = $prefix . (arg('u') ? arg('u') : $srcName);
+
+  $executiveDst = join_paths(arg('dst'), (arg('p') ? '' : $baseDst));
+
+  if (!arg('p')) {
+    if (is_dir($executiveDst)) {
+      print "Destination directory \"{$executiveDst}\" already exists.\n";
+      exit();
+    } else {
+      mkdir($executiveDst);
+    }
+  }
+  $tot = file_count(arg('src'), 'Procrustes\is_audio_file');
+  $belt = groom(arg('src'), $executiveDst, $tot);
+
+  if (!arg('p') && $tot === 0) {
+    rmdir($executiveDst);
+    print "There are no supported audio files in the source directory \"{arg('src')}\".\n";
+    exit();
+  }
+  return [$tot, $belt];
+}
+
+function copy_album()
+{
+  $alb = build_album();
+  foreach ($alb[1] as $round) {
+    print $round[0] . ' ' . $round[1] . "\n";
+    copy($round[0], $round[1]);
+  }
 }
 
 function main()
 {
   global $args;
   $args = retrieve_args();
-  $cnt = file_count('/home/alexey/dir-src', 'Procrustes\is_audio_file');
-  print "cnt=" . $cnt . "\n";
-
-  $haul = collect_dirs_and_files('/home/alexey/dir-src', 'Procrustes\is_audio_file');
-  print_r($haul[0]); print "\n";
-  print_r($haul[1]); print "\n";
-
-  $d = list_dir_groom('/home/alexey/dir-src');
-  print_r($d[0]); print "\n";
-  print_r($d[1]); print "\n";
-  print zero_pad(4, 1) . "\n";
-  print '.' . space_pad(4, 1) . ".\n";
-  print arg('src') . ' ' . arg('dst') . "\n";
-  print "Run as script." . "\n";
+  copy_album();
 }
 
 if (!debug_backtrace()) {
