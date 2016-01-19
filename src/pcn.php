@@ -91,6 +91,15 @@ function file_name($pth)
   return $parts['filename'];
 }
 
+function file_ext($pth)
+/*
+  Extracts extension
+ */
+{
+  $parts = pathinfo($pth);
+  return $parts['extension'];
+}
+
 function has_ext_of($pth, $ext)
 /*
   Returns True, if path has extension ext, case and leading dot insensitive
@@ -238,6 +247,45 @@ function list_dir_groom($absPath, $reverse = false)
   return $haul;
 }
 
+function zero_pad($w, $i) {return sprintf("%0{$w}d", $i);}
+
+function space_pad($w, $i) {return sprintf("%{$w}d", $i);}
+
+function decorate_dir_name($i, $name) {return zero_pad(3, $i) . '-' . $name;}
+
+function decorate_file_name($cntw, $i, $name)
+{
+  return zero_pad($cntw, $i) . (arg('u') ? arg('u') . '.' . file_ext($name) : $name);
+}
+
+function traverse_flat_dst($srcDir, $dstRoot, $fcount, $cntw)
+{
+  $groom = list_dir_groom($srcDir);
+  foreach ($groom[0] as $dir) {
+    yield from traverse_flat_dst($dir, $dstRoot, $fcount, $cntw);
+  }
+  foreach ($groom[1] as $file) {
+    $dst = join_paths($dstRoot, decorate_file_name($cntw, $fcount[0], file_name($file)));
+    $fcount[0]++;
+    yield [$file, $dst];
+  }
+}
+
+function groom($src, $dst, $cnt)
+/*
+  Makes an 'executive' run of traversing the source directory; returns the 'ammo belt' generator
+ */
+{
+  $cntw = strlen(strval($cnt));
+  if (arg('t'))
+    return traverse_flat_dst($src, $dst, [1], $cntw);
+  else
+    if (arg('r'))
+      return traverse_flat_dst($src, $dst, [1], $cntw);
+    else
+      return traverse_flat_dst($src, $dst, [1], $cntw);
+}
+
 function main()
 {
   global $args;
@@ -252,7 +300,8 @@ function main()
   $d = list_dir_groom('/home/alexey/dir-src');
   print_r($d[0]); print "\n";
   print_r($d[1]); print "\n";
-
+  print zero_pad(4, 1) . "\n";
+  print '.' . space_pad(4, 1) . ".\n";
   print arg('src') . ' ' . arg('dst') . "\n";
   print "Run as script." . "\n";
 }
