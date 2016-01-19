@@ -230,16 +230,29 @@ function list_dir_groom($absPath, $reverse = false)
  */
 {
   global $is_audio_file;
-  $haul = collect_dirs_and_files($absPath, $is_audio_file);
-
+  $haul = collect_dirs_and_files($absPath, 'Procrustes\is_audio_file');
+  $f = arg('r') ? -1 : 1;
+  $cmp = function($xp, $yp) use($f) {return $f * compare_path($xp, $yp);};
+  usort($haul[0], $cmp);
+  usort($haul[1], $cmp);
+  return $haul;
 }
 
 function main()
 {
   global $args;
   $args = retrieve_args();
-  $cnt = file_count('/home/alexey/dir-src', "is_audio_file");
+  $cnt = file_count('/home/alexey/dir-src', 'Procrustes\is_audio_file');
   print "cnt=" . $cnt . "\n";
+
+  $haul = collect_dirs_and_files('/home/alexey/dir-src', 'Procrustes\is_audio_file');
+  print_r($haul[0]); print "\n";
+  print_r($haul[1]); print "\n";
+
+  $d = list_dir_groom('/home/alexey/dir-src');
+  print_r($d[0]); print "\n";
+  print_r($d[1]); print "\n";
+
   print arg('src') . ' ' . arg('dst') . "\n";
   print "Run as script." . "\n";
 }
