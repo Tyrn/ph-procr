@@ -259,6 +259,10 @@ function decorate_file_name($cntw, $i, $name)
 }
 
 function traverse_flat_dst($srcDir, $dstRoot, &$fcount, $cntw)
+/*
+  Recursively traverses the source directory and yields a sequence of (src, flat dst) pairs;
+  the destination directory and file names get decorated according to options
+ */
 {
   $groom = list_dir_groom($srcDir);
   foreach ($groom[0] as $dir) {
@@ -272,6 +276,10 @@ function traverse_flat_dst($srcDir, $dstRoot, &$fcount, $cntw)
 }
 
 function traverse_flat_dst_r($srcDir, $dstRoot, &$fcount, $cntw)
+/*
+  Recursively traverses the source directory backwards (-r) and yields a sequence of (src, flat dst) pairs;
+  the destination directory and file names get decorated according to options
+ */
 {
   $groom = list_dir_groom($srcDir, true);
   foreach ($groom[1] as $file) {
@@ -284,6 +292,24 @@ function traverse_flat_dst_r($srcDir, $dstRoot, &$fcount, $cntw)
   }
 }
 
+function traverse_tree_dst($srcDir, $dstRoot, $dstStep, $cntw)
+/*
+  Recursively traverses the source directory and yields a sequence of (src, tree dst) pairs;
+  the destination directory and file names get decorated according to options
+ */
+{
+  $groom = list_dir_groom($srcDir);
+  foreach ($groom[0] as $i => $dir) {
+    $step = join_paths($dstStep, decorate_dir_name($i, basename($dir)));
+    mkdir(join_paths($dstRoot, $step));
+    yield from traverse_tree_dst($dir, $dstRoot, $step, $cntw);
+  }
+  foreach ($groom[1] as $i => $file) {
+    $dst = join_paths($dstRoot, join_paths($dstStep, decorate_file_name($cntw, $i, basename($file))));
+    yield [$file, $dst];
+  }
+}
+
 function groom($src, $dst, $cnt)
 /*
   Makes an 'executive' run of traversing the source directory; returns the 'ammo belt' generator
@@ -291,8 +317,7 @@ function groom($src, $dst, $cnt)
 {
   $cntw = strlen(strval($cnt));
   if (arg('t')) {
-    $c = 1;
-    return traverse_flat_dst($src, $dst, $c, $cntw);
+    return traverse_tree_dst($src, $dst, '', $cntw);
   } else {
     if (arg('r')) {
       $c = $cnt;
