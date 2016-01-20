@@ -360,13 +360,56 @@ function build_album()
   return [$tot, $belt];
 }
 
+function copy_file($i, $alb, $round)
+{
+  $build_title = function($s) use($i) {return arg('f') ? sans_ext($round[1]) : "{$i} {$s}";};
+
+  copy($round[0], $round[1]);
+
+  if (arg('v'))
+    print sprintf("%5d/%d ", $i, $alb[0]) . $round[0] . ' ' . $round[1] . "\n";
+  else
+    print ".";
+
+  $rq['request'] = 'settags';
+  $rq['file'] = $round[1];
+  $rq['tags']['tracknumber'] = "{$i}/{$alb[0]}";
+
+  if(arg('a') && arg('g')) {
+    $rq['tags']['title'] = $build_title(make_initials(arg('a'))) . ' - ' . arg('g');
+    $rq['tags']['artist'] = arg('a');
+    $rq['tags']['album'] = arg('g');
+  } elseif (arg('a')) {
+    $rq['tags']['title'] = $build_title(arg('a'));
+    $rq['tags']['artist'] = arg('a');
+  } elseif (arg('g')) {
+    $rq['tags']['title'] = $build_title(arg('g'));
+    $rq['tags']['album'] = arg('g');
+  }
+
+  // print_r(json_encode($rq, JSON_UNESCAPED_SLASHES) . "\n");
+}
+
 function copy_album()
 {
+  if(!arg('v')) print "Starting ";
+
   $alb = build_album();
-  foreach ($alb[1] as $round) {
-    print $round[0] . ' ' . $round[1] . "\n";
-    copy($round[0], $round[1]);
+  if(arg('r')) {
+    $i = 0;
+    foreach ($alb[1] as $round) {
+      copy_file($alb[0] - $i, $alb, $round);
+      $i++;
+    }
+  } else {
+    $i = 0;
+    foreach ($alb[1] as $round) {
+      copy_file($i + 1, $alb, $round);
+      $i++;
+    }
   }
+
+  if(!arg('v')) print " Done ({$alb[0]})\n";
 }
 
 function main()
